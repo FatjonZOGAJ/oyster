@@ -1,3 +1,8 @@
+# First set the following to allow all packages to be downloaded
+# conda config --set restore_free_channel true
+
+# cd rand_param_envs/
+# python3 -m pip install -e
 name: pearl
 channels:
   - kne

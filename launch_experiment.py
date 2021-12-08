@@ -122,17 +122,26 @@ def deep_update_dict(fr, to):
     return to
 
 @click.command()
-@click.argument('config', default=None)
+@click.argument('config', default=None) # env
 @click.option('--gpu', default=0)
 @click.option('--docker', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
-def main(config, gpu, docker, debug):
+@click.option('--n_train_tasks', default=None, type=click.INT)
+@click.option('--num_iterations', default=None, type=click.INT)
+def main(config, gpu, docker, debug, n_train_tasks, num_iterations):
 
     variant = default_config
     if config:
         with open(os.path.join(config)) as f:
             exp_params = json.load(f)
         variant = deep_update_dict(exp_params, variant)
+        if n_train_tasks:
+            variant['n_train_tasks'] = n_train_tasks
+            variant['env_params']['n_tasks'] = variant['n_train_tasks'] + variant['n_eval_tasks']
+        if num_iterations:
+            variant['num_iterations'] = num_iterations
+
+    print(variant)
     variant['util_params']['gpu_id'] = gpu
 
     experiment(variant)
