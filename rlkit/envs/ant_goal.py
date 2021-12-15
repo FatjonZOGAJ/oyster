@@ -3,8 +3,11 @@ import numpy as np
 from rlkit.envs.ant_multitask_base import MultitaskAntEnv
 from . import register_env
 
+GOAL_CONFIG = {'1': (0, np.pi / 2), '2': (0, np.pi), '3': (0, (np.pi + np.pi / 2)), '4': (0, 2 * np.pi),
+               '5': (np.pi / 2, 2 * np.pi), '6': (np.pi, 2 * np.pi), '7': (np.pi / 2 + np.pi, 2 * np.pi),
+               '8': (0, 2 * np.pi)}
 
-# Copy task structure from https://github.com/jonasrothfuss/ProMP/blob/master/meta_policy_search/envs/mujoco_envs/ant_rand_goal.py
+
 @register_env('ant-goal')
 class AntGoalEnv(MultitaskAntEnv):
     def __init__(self, task={}, n_tasks=2, randomize_tasks=True, **kwargs):
@@ -14,7 +17,7 @@ class AntGoalEnv(MultitaskAntEnv):
         self.do_simulation(action, self.frame_skip)
         xposafter = np.array(self.get_body_com("torso"))
 
-        goal_reward = -np.sum(np.abs(xposafter[:2] - self._goal)) # make it happy, not suicidal
+        goal_reward = -np.sum(np.abs(xposafter[:2] - self._goal))  # make it happy, not suicidal
 
         ctrl_cost = .1 * np.square(action).sum()
         contact_cost = 0.5 * 1e-3 * np.sum(
@@ -31,11 +34,17 @@ class AntGoalEnv(MultitaskAntEnv):
             reward_survive=survive_reward,
         )
 
-    def sample_tasks(self, num_tasks):
-        a = np.random.random(num_tasks) * 2 * np.pi
-        r = 3 * np.random.random(num_tasks) ** 0.5
+    def sample_tasks(self, train_tasks, eval_tasks, type):
+        tasks = []
+        a = np.random.uniform(GOAL_CONFIG[type][0], GOAL_CONFIG[type][1], train_tasks)
+        r = 3 * np.random.random(train_tasks) ** 0.5
         goals = np.stack((r * np.cos(a), r * np.sin(a)), axis=-1)
-        tasks = [{'goal': goal} for goal in goals]
+        tasks += [{'goal': goal} for goal in goals]
+
+        a = np.random.uniform(GOAL_CONFIG[str(int(type) + 4)][0], GOAL_CONFIG[str(int(type) + 4)][1], eval_tasks)
+        r = 3 * np.random.random(eval_tasks) ** 0.5
+        goals = np.stack((r * np.cos(a), r * np.sin(a)), axis=-1)
+        tasks += [{'goal': goal} for goal in goals]
         return tasks
 
     def _get_obs(self):

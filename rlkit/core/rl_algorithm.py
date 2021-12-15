@@ -4,6 +4,7 @@ import time
 
 import gtimer as gt
 import numpy as np
+from tqdm import tqdm
 
 from rlkit.core import logger, eval_util
 from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
@@ -158,7 +159,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             if it_ == 0:
                 print('collecting initial pool of data for train and eval')
                 # temp for evaluating
-                for idx in self.train_tasks:
+                for idx in tqdm(self.train_tasks):
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     self.collect_data(self.num_initial_steps, 1, np.inf)
