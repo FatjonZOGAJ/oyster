@@ -21,7 +21,6 @@ from configs.default import default_config
 
 
 def experiment(variant):
-
     # create multi-task environment and sample tasks
     env = NormalizedBoxEnv(ENVS[variant['env_name']](**variant['env_params']))
     tasks = env.get_all_task_idx()
@@ -31,7 +30,8 @@ def experiment(variant):
 
     # instantiate networks
     latent_dim = variant['latent_size']
-    context_encoder_input_dim = 2 * obs_dim + action_dim + reward_dim if variant['algo_params']['use_next_obs_in_context'] else obs_dim + action_dim + reward_dim
+    context_encoder_input_dim = 2 * obs_dim + action_dim + reward_dim if variant['algo_params'][
+        'use_next_obs_in_context'] else obs_dim + action_dim + reward_dim
     context_encoder_output_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim
     net_size = variant['net_size']
     recurrent = variant['algo_params']['recurrent']
@@ -101,7 +101,8 @@ def experiment(variant):
     # create logging directory
     # TODO support Docker
     exp_id = 'debug' if DEBUG else None
-    experiment_log_dir = setup_logger(variant['env_name'], variant=variant, exp_id=exp_id, base_log_dir=variant['util_params']['base_log_dir'])
+    experiment_log_dir = setup_logger(variant['env_name'], variant=variant, exp_id=exp_id,
+                                      base_log_dir=variant['util_params']['base_log_dir'])
 
     # optionally save eval trajectories as pkl files
     if variant['algo_params']['dump_eval_paths']:
@@ -110,6 +111,7 @@ def experiment(variant):
 
     # run the algorithm
     algorithm.train()
+
 
 def deep_update_dict(fr, to):
     ''' update dict of dicts with new values '''
@@ -121,15 +123,16 @@ def deep_update_dict(fr, to):
             to[k] = v
     return to
 
+
 @click.command()
-@click.argument('config', default=None) # env
+@click.argument('config', default=None)  # env
 @click.option('--gpu', default=0)
 @click.option('--docker', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
 @click.option('--n_train_tasks', default=None, type=click.INT)
 @click.option('--num_iterations', default=None, type=click.INT)
-def main(config, gpu, docker, debug, n_train_tasks, num_iterations):
-
+@click.option('--type', default=5, type=click.INT)
+def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type):
     variant = default_config
     if config:
         with open(os.path.join(config)) as f:
@@ -138,6 +141,8 @@ def main(config, gpu, docker, debug, n_train_tasks, num_iterations):
         if n_train_tasks:
             variant['n_train_tasks'] = n_train_tasks
             variant['env_params']['n_tasks'] = variant['n_train_tasks'] + variant['n_eval_tasks']
+        if type:
+            variant['env_params']['type'] = str(type)
         if num_iterations:
             variant['num_iterations'] = num_iterations
 
@@ -146,6 +151,6 @@ def main(config, gpu, docker, debug, n_train_tasks, num_iterations):
 
     experiment(variant)
 
+
 if __name__ == "__main__":
     main()
-
