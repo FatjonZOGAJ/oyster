@@ -132,7 +132,8 @@ def deep_update_dict(fr, to):
 @click.option('--n_train_tasks', default=None, type=click.INT)
 @click.option('--num_iterations', default=None, type=click.INT)
 @click.option('--type', default=5, type=click.INT)
-def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type):
+@click.option('--meta_batch', default=10, type=click.INT)
+def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type, meta_batch):
     variant = default_config
     if config:
         with open(os.path.join(config)) as f:
@@ -144,7 +145,9 @@ def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type):
         if type:
             variant['env_params']['type'] = str(type)
         if num_iterations:
-            variant['num_iterations'] = num_iterations
+            variant['algo_params']['num_iterations'] = num_iterations
+        if meta_batch:
+            variant['algo_params']['meta_batch'] = meta_batch
 
     print(variant)
     variant['util_params']['gpu_id'] = gpu

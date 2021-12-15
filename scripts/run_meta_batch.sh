@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 500 --type 1
-python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 500 --type 2
-python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 500 --type 3
-python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 500 --type 4
+python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 2500 --type 4 --meta_batch 2
+python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 1000 --type 4 --meta_batch 5
+python3 launch_experiment.py configs/ant-goal.json --n_train_tasks 150 --num_iterations 250 --type 4 --meta_batch 20
+# 10 is in OOD experiment
