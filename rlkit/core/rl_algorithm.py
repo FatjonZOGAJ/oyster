@@ -58,7 +58,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.env = env
         self.agent = agent
-        self.exploration_agent = agent # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
+        self.exploration_agent = agent  # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
         self.meta_batch = meta_batch
@@ -101,15 +101,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # - training RL update
         # - training encoder update
         self.replay_buffer = MultiTaskReplayBuffer(
-                self.replay_buffer_size,
-                env,
-                self.train_tasks,
-            )
+            self.replay_buffer_size,
+            env,
+            self.train_tasks,
+        )
 
         self.enc_replay_buffer = MultiTaskReplayBuffer(
-                self.replay_buffer_size,
-                env,
-                self.train_tasks,
+            self.replay_buffer_size,
+            env,
+            self.train_tasks,
         )
 
         self._n_env_steps_total = 0
@@ -123,7 +123,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self._exploration_paths = []
 
     def make_exploration_policy(self, policy):
-         return policy
+        return policy
 
     def make_eval_policy(self, policy):
         return policy
@@ -163,8 +163,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     self.collect_data(self.num_initial_steps, 1, np.inf)
-            # Sample data from train tasks.
-            for i in range(self.num_tasks_sample):
+            print('Sample data from train tasks.')
+            for i in tqdm(range(self.num_tasks_sample)):
                 idx = np.random.randint(len(self.train_tasks))
                 self.task_idx = idx
                 self.env.reset_task(idx)
@@ -178,10 +178,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.collect_data(self.num_steps_posterior, 1, self.update_post_train)
                 # even if encoder is trained only on samples from the prior, the policy needs to learn to handle z ~ posterior
                 if self.num_extra_rl_steps_posterior > 0:
-                    self.collect_data(self.num_extra_rl_steps_posterior, 1, self.update_post_train, add_to_enc_buffer=False)
+                    self.collect_data(self.num_extra_rl_steps_posterior, 1, self.update_post_train,
+                                      add_to_enc_buffer=False)
 
-            # Sample train tasks and compute gradient updates on parameters.
-            for train_step in range(self.num_train_steps_per_itr):
+            print('Sample train tasks and compute gradient updates on parameters.')
+            for train_step in tqdm(range(self.num_train_steps_per_itr)):
                 indices = np.random.choice(self.train_tasks, self.meta_batch)
                 self._do_training(indices)
                 self._n_train_steps_total += 1
@@ -189,7 +190,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             self.training_mode(False)
 
-            # eval
+            print('Evaluation')
             self._try_to_eval(it_)
             gt.stamp('eval')
 
@@ -218,9 +219,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         num_transitions = 0
         while num_transitions < num_samples:
             paths, n_samples = self.sampler.obtain_samples(max_samples=num_samples - num_transitions,
-                                                                max_trajs=update_posterior_rate,
-                                                                accum_context=False,
-                                                                resample=resample_z_rate)
+                                                           max_trajs=update_posterior_rate,
+                                                           accum_context=False,
+                                                           resample=resample_z_rate)
             num_transitions += n_samples
             self.replay_buffer.add_paths(self.task_idx, paths)
             if add_to_enc_buffer:
@@ -301,7 +302,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :return:
         """
         agent.set_num_steps_total(self._n_env_steps_total)
-        return agent.get_action(observation,)
+        return agent.get_action(observation, )
 
     def _start_epoch(self, epoch):
         self._epoch_start_time = time.time()
@@ -355,7 +356,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         num_transitions = 0
         num_trajs = 0
         while num_transitions < self.num_steps_per_eval:
-            path, num = self.sampler.obtain_samples(deterministic=self.eval_deterministic, max_samples=self.num_steps_per_eval - num_transitions, max_trajs=1, accum_context=True)
+            path, num = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
+                                                    max_samples=self.num_steps_per_eval - num_transitions, max_trajs=1,
+                                                    accum_context=True)
             paths += path
             num_transitions += num
             num_trajs += 1
@@ -369,7 +372,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
         goal = self.env._goal
         for path in paths:
-            path['goal'] = goal # goal
+            path['goal'] = goal  # goal
 
         # save the paths for visualization, only useful for point mass
         if self.dump_eval_paths:
@@ -389,7 +392,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # record online returns for the first n trajectories
             n = min([len(a) for a in all_rets])
             all_rets = [a[:n] for a in all_rets]
-            all_rets = np.mean(np.stack(all_rets), axis=0) # avg return per nth rollout
+            all_rets = np.mean(np.stack(all_rets), axis=0)  # avg return per nth rollout
             online_returns.append(all_rets)
         n = min([len(t) for t in online_returns])
         online_returns = [t[:n] for t in online_returns]
@@ -404,9 +407,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # 100 arbitrarily chosen for visualizations of point_robot trajectories
             # just want stochasticity of z, not the policy
             self.agent.clear_z()
-            prior_paths, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic, max_samples=self.max_path_length * 20,
-                                                        accum_context=False,
-                                                        resample=1)
+            prior_paths, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
+                                                         max_samples=self.max_path_length * 20,
+                                                         accum_context=False,
+                                                         resample=1)
             logger.save_extra_data(prior_paths, path='eval_trajectories/prior-epoch{}'.format(epoch))
 
         ### train tasks
@@ -422,10 +426,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             for _ in range(self.num_steps_per_eval // self.max_path_length):
                 context = self.sample_context(idx)
                 self.agent.infer_posterior(context)
-                p, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic, max_samples=self.max_path_length,
-                                                        accum_context=False,
-                                                        max_trajs=1,
-                                                        resample=np.inf)
+                p, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
+                                                   max_samples=self.max_path_length,
+                                                   accum_context=False,
+                                                   max_trajs=1,
+                                                   resample=np.inf)
                 paths += p
 
             if self.sparse_rewards:
@@ -488,4 +493,3 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :return:
         """
         pass
-

@@ -4,6 +4,8 @@ Launcher for experiments with PEARL
 """
 import os
 import pathlib
+import random
+
 import numpy as np
 import click
 import json
@@ -133,7 +135,9 @@ def deep_update_dict(fr, to):
 @click.option('--num_iterations', default=None, type=click.INT)
 @click.option('--type', default=5, type=click.INT)
 @click.option('--meta_batch', default=10, type=click.INT)
-def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type, meta_batch):
+@click.option('--seed', default=1, type=click.INT)
+@click.option('--name', default='output')
+def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type, meta_batch, seed, name):
     variant = default_config
     if config:
         with open(os.path.join(config)) as f:
@@ -148,6 +152,12 @@ def main(config, gpu, docker, debug, n_train_tasks, num_iterations, type, meta_b
             variant['algo_params']['num_iterations'] = num_iterations
         if meta_batch:
             variant['algo_params']['meta_batch'] = meta_batch
+        if name:
+            variant['util_params']['base_log_dir'] = f'output/seed{seed}/' + name
+        if seed is not None:
+            torch.manual_seed(seed)
+            random.seed(seed)
+            np.random.seed(seed)
 
     print(variant)
     variant['util_params']['gpu_id'] = gpu
